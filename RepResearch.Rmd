@@ -1,0 +1,22 @@
+Reproducable Research Peer Assessment 1
+========================================================
+
+##Download the data 
+
+```{r}
+target_url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+target_localfile = "ActivityMonitoringData.zip"
+if (!file.exists(target_localfile)) {
+  download.file(target_url, destfile = target_localfile) 
+}
+```
+
+Unzip the file to the temporary directory
+```{r}
+unzip(target_localfile, exdir="extract", overwrite=TRUE)
+```
+
+List the extracted files
+```{r}
+list.files("./extract")
+```
