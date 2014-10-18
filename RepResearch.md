@@ -136,7 +136,7 @@ sqldf("select interval, max(steps) steps from plotData")
 ```
 
 
-##Imputing missing values
+## Imputing missing values
 Find the amount of rows that contain missing values.  As I removed them earlier this is a simple subtraction:
 
 
@@ -147,4 +147,156 @@ MissingValues
 
 ```
 ## [1] 2304
+```
+
+Now to replace the NAs with a value, I've decided to use the Median of the interval, so if the NA is at interval 0, then it will be given the median steps value for interval 0.  I used data.table from this after researching and finding the following page: http://stackoverflow.com/questions/11971876/how-to-fill-na-with-median
+
+
+```r
+library(data.table)
+DT <- data.table(activity.csv)
+setkey(DT, interval)
+
+DT[,steps := ifelse(is.na(steps), median(steps, na.rm=TRUE), steps), by=interval]
+```
+
+```
+##        steps       date interval
+##     1:     0 2012-10-01        0
+##     2:     0 2012-10-02        0
+##     3:     0 2012-10-03        0
+##     4:    47 2012-10-04        0
+##     5:     0 2012-10-05        0
+##    ---                          
+## 17564:     0 2012-11-26     2355
+## 17565:     0 2012-11-27     2355
+## 17566:     0 2012-11-28     2355
+## 17567:     0 2012-11-29     2355
+## 17568:     0 2012-11-30     2355
+```
+
+```r
+DT <- DT[order(date,interval)]
+head(DT)
+```
+
+```
+##    steps       date interval
+## 1:     0 2012-10-01        0
+## 2:     0 2012-10-01        5
+## 3:     0 2012-10-01       10
+## 4:     0 2012-10-01       15
+## 5:     0 2012-10-01       20
+## 6:     0 2012-10-01       25
+```
+
+Create a histogram of the new data:
+
+```r
+NAs_replaced <- aggregate(steps ~ date, data = DT, sum)
+h2 <- hist(NAs_replaced$steps,  # Save histogram as object
+          breaks = 11,  # "Suggests" 11 bins
+          freq = T,
+          col = rgb(0,0,1,1/4), 
+          main = "Histogram of Activity",
+          xlab = "Number of daily steps when NAs are replaced with the interval Median")
+```
+
+![plot of chunk unnamed-chunk-13](figure/unnamed-chunk-13.png) 
+
+To show the difference after the changes I've included both in the following histogram:
+
+```r
+NAs_removed <- aggregate(steps ~ date, data = activity1, sum)
+NAs_replaced <- aggregate(steps ~ date, data = DT, sum)
+
+hist(NAs_replaced$steps, col=rgb(1,0,0,0.5),breaks = 11,main = "Histogram of Activity", xlab="Variable")
+hist(NAs_removed$steps, col=rgb(0,0,1,0.5), breaks = 11, add=T)
+legend("topright", c("Replaced NAs", "Removed NAs"), col=c(rgb(1,0,0,0.5), rgb(0,0,1,0.5)), lwd=10)
+box()
+```
+
+![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-14.png) 
+
+So how do these affect the Mean and Median? the new mean and medians are:
+
+```r
+NAsReplacedSteps <-aggregate(steps ~ date, data = DT, sum)
+mean(NAsReplacedSteps$steps)
+```
+
+```
+## [1] 9503.86885246
+```
+
+```r
+median(NAsReplacedSteps$steps)
+```
+
+```
+## [1] 10395
+```
+
+To compare the difference between the new figures and those we created when we removed the NAs we do a simple subtraction:
+
+```r
+mean(NAsReplacedSteps$steps) - mean(steps)
+```
+
+```
+## [1] -1262.31982679
+```
+
+```r
+median(NAsReplacedSteps$steps) - median(steps)
+```
+
+```
+## [1] -370
+```
+
+Therefore replacing the missing values has affected the averages quite significantly
+
+## Are there differences in activity patterns between weekdays and weekends?
+
+Create a new factor variable in the dataset with two levels -- "weekday" and "weekend" indicating whether a given date is a weekday or weekend day, I can do this  by creating the new column via an ifelse statement:
+
+
+```r
+class(DT$date)
+```
+
+```
+## [1] "factor"
+```
+
+```r
+DT$days <- ifelse(!weekdays(as.Date(DT$date)) %in% c("Saturday", "Sunday"),
+       "weekday","weekend")
+
+head(DT)
+```
+
+```
+##    steps       date interval    days
+## 1:     0 2012-10-01        0 weekday
+## 2:     0 2012-10-01        5 weekday
+## 3:     0 2012-10-01       10 weekday
+## 4:     0 2012-10-01       15 weekday
+## 5:     0 2012-10-01       20 weekday
+## 6:     0 2012-10-01       25 weekday
+```
+
+Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). The plot should look something like the following, which was created using simulated data:
+
+
+```r
+library(lattice)
+
+DT1 <- aggregate(steps ~ date, data = DT, sum)
+xyplot(DT1$steps ~ DT1$interval | DT1$days, type="l", layout = c(1,2))
+```
+
+```
+## Error: need at least one panel
 ```
