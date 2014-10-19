@@ -2,7 +2,7 @@ Reproducable Research Peer Assessment 1
 ========================================================
 
 ## Download the data 
-Note: You have to change https to http to get this to work in knitr
+Note: You have to change the target link from https to http to get this to work in knitr
 
 
 ```r
@@ -51,7 +51,7 @@ str(activity1)
 ```
 
 ## What is mean total number of steps taken per day?
--Use a histogram to view the number of steps taken each day, but first create an aggregrate to get the mean per day
+-Use a histogram to view the number of steps taken each day, but first create an aggregrate to get the sum of steps per day
 
 
 ```r
@@ -62,9 +62,9 @@ and now the histogram
 
 ```r
 h <- hist(histData$steps,  # Save histogram as object
-          breaks = 11,  # "Suggests" 11 bins
-          freq = T,
-          col = "thistle1", # Or use: col = colors() [626]
+          breaks = 11,  
+          freq = T, #not a density graph
+          col = "thistle1", 
           main = "Histogram of Activity",
           xlab = "Number of daily steps")
 ```
@@ -108,7 +108,8 @@ plot(plotData, type="l", main=" Average number of steps taken, averaged across a
 
 -Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
-To find the maximum I will use an SQLDF command, as this is simple
+To find the maximum I will use an SQLDF command
+
 
 ```r
 library(sqldf)
@@ -134,7 +135,7 @@ sqldf("select interval, max(steps) steps from plotData")
 ##   interval         steps
 ## 1      835 206.169811321
 ```
-
+interval 835 has the maximum number of steps on average (206)
 
 ## Imputing missing values
 Find the amount of rows that contain missing values.  As I removed them earlier this is a simple subtraction:
@@ -287,16 +288,17 @@ head(DT)
 ## 6:     0 2012-10-01       25 weekday
 ```
 
-Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). The plot should look something like the following, which was created using simulated data:
+Make a panel plot containing a time series plot  of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days
 
 
 ```r
 library(lattice)
 
-DT1 <- aggregate(steps ~ date, data = DT, sum)
-xyplot(DT1$steps ~ DT1$interval | DT1$days, type="l", layout = c(1,2))
+DT1 <- aggregate(DT$steps, list(days = DT$days, interval = DT$interval), mean)
+
+xyplot(x ~ interval | days, data = DT1, type = "l", layout = c(1, 2), ylab="Average Number of steps")
 ```
 
-```
-## Error: need at least one panel
-```
+![plot of chunk unnamed-chunk-18](figure/unnamed-chunk-18.png) 
+
+Interseting that the average steps do differ bewtween weekdays and weekends.   Weekends don't have that major spike and seem more spread across the intervals.
